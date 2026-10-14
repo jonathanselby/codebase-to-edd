@@ -14,10 +14,14 @@ Trace representative execution paths from entry point to side effect. Read confi
 
 ## Required workflow
 
-### 1. Establish repository scope
+### 1. Establish repository scope and provenance
 
 Identify:
 
+- repository name and canonical source URL;
+- exact commit SHA or immutable version/tag where possible;
+- branch used only as contextual information, not as the sole analysis reference;
+- source licence;
 - primary language(s);
 - build and dependency system;
 - executable entry points;
@@ -28,6 +32,8 @@ Identify:
 - generated code or vendored dependencies that should not dominate the analysis.
 
 State any scope exclusions explicitly.
+
+For public worked examples, pin the analysis to an exact commit so another reader can inspect the same code later.
 
 ### 2. Identify entry points
 
@@ -76,6 +82,8 @@ For each flow identify:
 
 Prefer two or three representative flows over exhaustive call-graph transcription.
 
+Do not stop when the happy path is understood. Check loops, integer allocation, batching, cancellation, concurrency, ordering and partial-success paths for behaviour that qualifies the apparent contract.
+
 ### 5. Identify state and authority
 
 Find all material state stores, including:
@@ -108,9 +116,10 @@ Record material interfaces such as:
 - filesystem contracts;
 - SDK/API clients;
 - environment variables;
-- config files.
+- config files;
+- callbacks/library APIs.
 
-Distinguish internal interfaces from external dependencies.
+Distinguish internal interfaces from external dependencies. For libraries, distinguish what the library guarantees from responsibilities retained by the caller.
 
 ### 7. Inspect failure behaviour
 
@@ -121,6 +130,7 @@ Look for:
 - returned errors;
 - retries;
 - timeouts;
+- cancellation;
 - circuit breakers;
 - dead-letter behaviour;
 - process termination;
@@ -128,7 +138,8 @@ Look for:
 - partial writes;
 - compensating actions;
 - ignored errors;
-- panic/exception paths.
+- panic/exception paths;
+- zero-result/empty-state handling.
 
 If recovery behaviour is absent, say so rather than assuming infrastructure handles it.
 
@@ -140,6 +151,7 @@ Identify only what the repository supports, including:
 - authorisation;
 - trust boundaries;
 - credential handling;
+- certificate/TLS behaviour;
 - encryption use;
 - externally supplied input;
 - privileged operations;
@@ -156,12 +168,27 @@ Where evidence exists, record:
 - tracing;
 - health checks;
 - graceful shutdown;
+- cancellation semantics;
 - configuration loading;
 - deployment assumptions;
 - concurrency model;
-- resource-sensitive behaviour.
+- resource-sensitive behaviour;
+- restart/persistence assumptions.
 
-### 10. Classify findings
+### 10. Compare code, tests and documentation
+
+Do not assume these sources agree.
+
+Check whether:
+
+- tests cover material boundary conditions;
+- documentation promises behaviour more strongly than code implements it;
+- code comments reveal deliberate limitations;
+- tests demonstrate only a narrow case of a broader contract.
+
+Record contradictions or uncovered edge cases explicitly rather than silently reconciling them.
+
+### 11. Classify findings
 
 Every material conclusion should be one of:
 
@@ -221,6 +248,8 @@ Prefer evidence in this order:
 
 Documentation may be stale. Code may also be incomplete. Note contradictions rather than silently reconciling them.
 
+For real-world examples, use stable links pinned to the analysed commit where practical.
+
 ## Things not to do
 
 Do not:
@@ -233,7 +262,8 @@ Do not:
 - assume tests prove production configuration;
 - assume an interface is used merely because it exists;
 - turn the EDD into an architecture scorecard;
-- recommend a redesign unless explicitly asked.
+- recommend a redesign unless explicitly asked;
+- copy substantial source code into the EDD when a reference is sufficient.
 
 ## Completion test
 
@@ -246,5 +276,7 @@ The EDD is good enough when a competent engineer unfamiliar with the repository 
 - which external systems it depends on;
 - what happens when important things fail;
 - where trust boundaries sit;
+- what operational assumptions matter;
 - what is known versus inferred;
+- what behaviour materially qualifies the apparent contract;
 - what they still need to ask a maintainer.

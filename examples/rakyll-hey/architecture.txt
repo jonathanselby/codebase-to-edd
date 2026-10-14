@@ -1,0 +1,110 @@
+RAKYLL/HEY — CONTEXT
+
+                     CLI USER
+                        |
+                        | flags + target URL
+                        v
+                +------------------+
+                |      hey CLI     |
+                |     hey.go       |
+                +---------+--------+
+                          |
+                          | configured Work
+                          v
+                +------------------+
+                | requester.Work   |
+                +---+----------+---+
+                    |          |
+           workers  |          | results
+                    v          v
+             +-----------+  +-----------+
+             | HTTP      |  | Reporter  |
+             | workers   |  | + renderer|
+             +-----+-----+  +-----+-----+
+                   |              |
+                   | HTTP/S       | summary / CSV
+                   v              v
+             +-----------+      STDOUT /
+             | TARGET    |      WRITER
+             | SERVICE   |
+             +-----------+
+
+Evidence: hey.go, requester/requester.go, requester/report.go,
+requester/print.go at commit 5626f79b8698df6daf9b25799c9805c6acc96740.
+
+
+COUNT-BASED RUNTIME FLOW
+
+CLI
+ |
+ | parse flags / validate N,C
+ v
+BUILD HTTP REQUEST
+ |
+ v
+CREATE Work
+ |
+ v
+Work.Run()
+ |
+ +--------------------------+
+ |                          |
+ | start reporter goroutine |
+ |                          |
+ v                          v
+CREATE SHARED CLIENT      REPORTER WAITS
+ |
+ v
+LAUNCH C WORKERS
+ |
+ | each executes N/C iterations
+ | remainder N%C is ignored
+ v
+CLONE REQUEST
+ |
+ v
+ATTACH httptrace
+ |
+ v
+HTTP CLIENT.Do
+ |
+ +-- error --------------------+
+ |                             |
+ v                             v
+DRAIN + CLOSE BODY          RESULT(error)
+ |
+ v
+RESULT(timings/status)
+ |
+ +-----------------------------+
+ |
+ v
+RESULTS CHANNEL
+ |
+ v
+REPORTER AGGREGATES
+ |
+ v
+SUMMARY / CSV
+
+
+STOP FLOW
+
+OS INTERRUPT or -z TIMER
+          |
+          v
+      Work.Stop()
+          |
+          | one token per worker
+          v
+       stopCh
+          |
+          v
+WORKER CHECKS BETWEEN REQUESTS
+          |
+          +-- stop token --> EXIT WORKER
+          |
+          +-- no token ----> SEND NEXT REQUEST
+
+Note: an HTTP request already in flight is not cancelled by Stop();
+it completes or reaches the configured client timeout first.

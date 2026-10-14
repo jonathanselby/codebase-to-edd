@@ -43,12 +43,14 @@ A normal run should produce:
 
 - Separate observed facts from inference.
 - Reference the real code where possible.
+- Pin real analyses to an exact commit, not only a moving branch.
 - Explain runtime behaviour, not merely directory structure.
 - Prefer a few useful diagrams over decorative ones.
 - Do not invent missing architecture.
 - Mark uncertainty explicitly.
 - Treat configuration, data stores and external services as part of the system.
 - Record material failure paths, not just the happy path.
+- Surface behaviour that contradicts or qualifies the apparent contract.
 
 ## Repository structure
 
@@ -61,6 +63,13 @@ codebase-to-edd/
 ├── references/
 │   └── diagram-conventions.md
 ├── examples/
+│   ├── README.md
+│   ├── rakyll-hey/
+│   │   ├── EDD.md
+│   │   └── architecture.txt
+│   ├── dbader-schedule/
+│   │   ├── EDD.md
+│   │   └── architecture.txt
 │   └── illustrative-service/
 │       ├── EDD.md
 │       └── architecture.txt
@@ -72,6 +81,8 @@ codebase-to-edd/
 Give a capable coding agent access to the target repository together with [`SKILL.md`](SKILL.md).
 
 The agent should inspect the repository before writing the document, trace representative execution paths, identify state and dependencies, and then populate the EDD structure in [`templates/EDD-template.md`](templates/EDD-template.md).
+
+For a public or versioned repository, analyse an exact commit and record it in the EDD. This makes the output reproducible and prevents later repository changes from silently invalidating the analysis.
 
 The result should distinguish three classes of finding:
 
@@ -108,6 +119,22 @@ EVIDENCE + INFERENCE + UNKNOWN
 ENGINEERING DESIGN DOCUMENT
 ```
 
+## Real-world worked examples
+
+Two public repositories have been analysed end to end and pinned to exact commits. See [`examples/README.md`](examples/README.md) for provenance and source licences.
+
+### Go — `rakyll/hey`
+
+[`examples/rakyll-hey/EDD.md`](examples/rakyll-hey/EDD.md) reconstructs the CLI, worker pool, HTTP execution and reporting path. The analysis also exposes implementation behaviour that a directory summary would miss, including request-count truncation when `N` is not divisible by concurrency and disabled TLS certificate verification in the benchmark transport.
+
+### Python — `dbader/schedule`
+
+[`examples/dbader-schedule/EDD.md`](examples/dbader-schedule/EDD.md) reconstructs the in-process scheduling model, job lifecycle and next-run calculation. It makes the library's missed-job semantics explicit: delayed polling does not replay every missed interval.
+
+### Fictional example
+
+[`examples/illustrative-service`](examples/illustrative-service) remains as a deliberately small teaching example for partial-success ambiguity and unknowns.
+
 ## What this is not
 
 This is not:
@@ -120,12 +147,8 @@ This is not:
 
 The output is a recoverable engineering view of the evidence available in the codebase.
 
-## Example
-
-[`examples/illustrative-service`](examples/illustrative-service) shows the expected shape of an output for a deliberately small fictional service. It is an example of the document standard, not evidence that the method has yet been benchmarked against that implementation.
-
-A real public-repository cross-test is the next planned increment.
-
 ## Licence
 
-MIT.
+This repository is released under the **MIT License**. The complete licence text is in [`LICENSE`](LICENSE).
+
+The public repositories used as worked examples retain their own licences; the example index records those source licences and pinned commits.

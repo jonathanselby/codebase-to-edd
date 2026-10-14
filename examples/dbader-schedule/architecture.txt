@@ -1,0 +1,113 @@
+DBADER/SCHEDULE — CONTEXT
+
+                 CALLER APPLICATION
+                        |
+                        | every(...).unit.do(fn)
+                        v
+                +------------------+
+                |   schedule API   |
+                | module shortcuts |
+                +---------+--------+
+                          |
+                          v
+                +------------------+
+                |    Scheduler     |
+                | jobs[] in memory |
+                +---------+--------+
+                          |
+                          | owns
+                          v
+                +------------------+
+                |       Job        |
+                | next_run / fn    |
+                +---------+--------+
+                          |
+                          | Job.run()
+                          v
+                +------------------+
+                | USER CALLABLE    |
+                +------------------+
+
+Caller must repeatedly invoke run_pending().
+No daemon or durable scheduler store exists in the core library.
+
+
+REGISTER JOB FLOW
+
+CALLER
+  |
+  v
+Scheduler.every(interval)
+  |
+  v
+NEW Job
+  |
+  | fluent configuration
+  | unit / at / to / until / tag
+  v
+Job.do(callable)
+  |
+  +--> store functools.partial
+  |
+  +--> calculate next_run
+  |
+  +--> append to Scheduler.jobs
+  v
+REGISTERED IN MEMORY
+
+
+RUN PENDING FLOW
+
+CALLER LOOP
+  |
+  | run_pending()
+  v
+FILTER jobs WHERE should_run
+  |
+  v
+SORT BY next_run
+  |
+  v
+Scheduler._run_job(job)
+  |
+  v
+Job.run()
+  |
+  +-- overdue ----------> CancelJob
+  |
+  v
+CALL USER FUNCTION
+  |
+  v
+SET last_run
+  |
+  v
+CALCULATE next_run
+  |
+  +-- deadline exceeded -> CancelJob
+  |
+  v
+RETURN RESULT
+
+If CancelJob is returned, Scheduler removes the job.
+
+
+TIMING SEMANTIC
+
+next_run arrives
+     |
+     | caller does not poll
+     v
+one or more intervals pass
+     |
+     | caller eventually calls run_pending()
+     v
+JOB RUNS ONCE
+     |
+     v
+NEXT RUN RECALCULATED
+
+Missed intervals are intentionally not replayed.
+
+Evidence: schedule/__init__.py, README.rst, pyproject.toml
+at commit 82a43db1b938d8fdf60103bd41f329e06c8d3651.

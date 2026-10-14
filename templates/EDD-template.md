@@ -10,13 +10,17 @@ Cover:
 - who or what invokes it;
 - its major runtime responsibilities;
 - the most important state and dependencies;
-- material uncertainty.
+- material uncertainty;
+- any behaviour that materially qualifies the apparent contract.
 
 ## 2. Scope and evidence basis
 
 ### Repository analysed
 
-`<repository / commit / branch>`
+- Repository: `<canonical repository URL>`
+- Commit / immutable ref: `<SHA or tag>`
+- Branch at analysis time: `<branch, if relevant>`
+- Source licence: `<licence>`
 
 ### Included
 
@@ -28,7 +32,7 @@ Cover:
 
 ### Evidence basis
 
-List the main code, tests, configuration and runtime artefacts used.
+List the main code, tests, configuration and runtime artefacts used. Prefer links pinned to the analysed commit where practical.
 
 ## 3. Repository map
 
@@ -58,6 +62,8 @@ Describe only the parts that materially affect system behaviour.
 
 Repeat for representative flows only.
 
+Call out edge conditions where loops, batching, integer division, ordering, concurrency, cancellation or partial success change observable behaviour.
+
 ## 6. State and persistence
 
 | Store / state | Content | Read by | Written by | Authority | Lifecycle | Confidence |
@@ -68,7 +74,9 @@ Repeat for representative flows only.
 
 | Interface | Direction | Contract | Used by | Evidence |
 |---|---|---|---|---|
-| `<interface>` | inbound / outbound / internal | `<protocol/schema>` | `<component>` | `<reference>` |
+| `<interface>` | inbound / outbound / internal | `<protocol/schema/API>` | `<component>` | `<reference>` |
+
+For libraries, distinguish library guarantees from responsibilities retained by the caller.
 
 ## 8. External dependencies
 
@@ -82,7 +90,7 @@ Document material runtime configuration only.
 
 | Setting | Source | Purpose | Default / required | Evidence |
 |---|---|---|---|---|
-| `<setting>` | env / file / flag | `<purpose>` | `<value/status>` | `<reference>` |
+| `<setting>` | env / file / flag / API | `<purpose>` | `<value/status>` | `<reference>` |
 
 ## 10. Failure and recovery behaviour
 
@@ -93,6 +101,8 @@ For each material failure mode, state what the code actually does.
 | `<failure>` | `<signal>` | `<behaviour>` | `<recovery>` | KNOWN / INFERRED / UNKNOWN |
 
 Call out explicitly where recovery is absent or cannot be established.
+
+Also inspect zero-result, empty-state, partial-success, retry and cancellation paths where relevant.
 
 ## 11. Security boundaries
 
@@ -105,6 +115,7 @@ Consider:
 - untrusted input;
 - privileged operations;
 - credentials;
+- TLS/certificate behaviour;
 - sensitive data;
 - external trust boundaries.
 
@@ -117,8 +128,10 @@ Document evidence for:
 - tracing;
 - health checks;
 - graceful shutdown;
+- cancellation semantics;
 - concurrency;
 - deployment assumptions;
+- restart/persistence assumptions;
 - resource-sensitive behaviour.
 
 ## 13. Known / inferred / unknown

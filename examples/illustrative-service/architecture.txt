@@ -1,0 +1,49 @@
++------------------+
+|      Client      |
++---------+--------+
+          |
+          | POST /jobs
+          v
++------------------+
+|   HTTP Handler   |
++---------+--------+
+          |
+          | validated request
+          v
++------------------+
+|    Job Service   |
++----+---------+---+
+     |         |
+     | SQL     | HTTP
+     v         v
++---------+  +------------------+
+| SQLite  |  |    Worker API    |
++---------+  +------------------+
+
+Representative runtime flow
+---------------------------
+
+REQUEST
+  |
+  v
+VALIDATE
+  |
+  +-- invalid ----------------------> 400
+  |
+  v
+WRITE PENDING JOB
+  |
+  +-- store error ------------------> fail
+  |
+  v
+CALL WORKER
+  |
+  +-- worker error --> RECORD FAIL --> fail
+  |
+  v
+WRITE RESULT
+  |
+  +-- store error --> PARTIAL SUCCESS / UNKNOWN RECONCILIATION
+  |
+  v
+200 + RESULT
